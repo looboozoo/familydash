@@ -51,7 +51,7 @@
     position: relative;
     z-index: 1;
     display: grid;
-    grid-template-columns: 280px 1fr 260px;
+    grid-template-columns: 280px 1fr 280px;
     grid-template-rows: auto 1fr auto;
     gap: var(--gap);
     padding: 24px;
@@ -60,7 +60,6 @@
     margin: 0 auto;
   }
 
-  /* ---- CARD BASE ---- */
   .card {
     background: var(--card-bg);
     backdrop-filter: blur(12px);
@@ -93,17 +92,13 @@
     box-shadow: 0 2px 20px rgba(0,0,0,0.04);
   }
 
-  .topbar-left {
-    display: flex;
-    flex-direction: column;
-  }
+  .topbar-left { display: flex; flex-direction: column; }
 
   .topbar-date {
     font-family: 'Nunito', sans-serif;
     font-size: 28px;
     font-weight: 300;
     line-height: 1;
-    color: var(--ink);
   }
 
   .topbar-day {
@@ -118,7 +113,6 @@
     font-family: 'Nunito', sans-serif;
     font-size: 48px;
     font-weight: 300;
-    color: var(--ink);
     letter-spacing: -0.02em;
     line-height: 1;
   }
@@ -126,7 +120,7 @@
   .topbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
   }
 
   .weather-pill {
@@ -136,20 +130,41 @@
     background: var(--sky);
     border-radius: 40px;
     padding: 8px 16px;
-    font-size: 13px;
-    font-weight: 400;
   }
 
   .weather-icon { font-size: 20px; }
   .weather-temp { font-size: 22px; font-family: 'Nunito', sans-serif; font-weight: 400; }
   .weather-desc { font-size: 11px; color: var(--ink-soft); }
 
-  /* ---- LEFT COL ---- */
-  .left-col {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
+  /* ---- SIGN IN BUTTON (topbar) ---- */
+  .gcal-signin-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    border: 1.5px solid rgba(0,0,0,0.12);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink);
+    transition: background 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
   }
+  .gcal-signin-btn:hover { background: #f5f5f5; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .gcal-signin-btn.connected {
+    background: rgba(80,180,80,0.08);
+    border-color: rgba(80,180,80,0.3);
+    color: #3a8a3a;
+    cursor: default;
+  }
+  .gcal-signin-btn.connected:hover { background: rgba(80,180,80,0.08); box-shadow: none; }
+  .gcal-icon { width: 16px; height: 16px; flex-shrink: 0; }
+
+  /* ---- LEFT COL ---- */
+  .left-col { display: flex; flex-direction: column; gap: var(--gap); }
 
   /* Baby Countdown */
   .card-baby {
@@ -157,7 +172,6 @@
     border-color: rgba(255,255,255,0.9);
     text-align: center;
   }
-
   .baby-days {
     font-family: 'Nunito', sans-serif;
     font-size: 72px;
@@ -165,7 +179,6 @@
     line-height: 1;
     color: #b06080;
   }
-
   .baby-days-label {
     font-size: 11px;
     color: #c080a0;
@@ -173,14 +186,7 @@
     text-transform: uppercase;
     margin-top: 2px;
   }
-
-  .baby-due {
-    font-size: 12px;
-    color: #b06080;
-    margin-top: 10px;
-    font-weight: 300;
-  }
-
+  .baby-due { font-size: 12px; color: #b06080; margin-top: 10px; font-weight: 300; }
   .baby-emoji { font-size: 28px; margin-bottom: 8px; display: block; }
 
   /* Romy */
@@ -188,20 +194,32 @@
     background: linear-gradient(135deg, #f0f5e8, #e8f0dc);
     border-color: rgba(255,255,255,0.9);
     text-align: center;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.12s;
   }
-
-  .romy-name {
-    font-family: 'Nunito', sans-serif;
-    font-size: 28px;
-    font-weight: 300;
-    color: #5a7a4a;
-  }
-
+  .card-romy:hover { transform: scale(1.01); }
+  .card-romy:active { transform: scale(0.98); }
+  .romy-name { font-family: 'Nunito', sans-serif; font-size: 20px; font-weight: 600; color: #5a7a4a; }
   .romy-emoji { font-size: 36px; display: block; margin-bottom: 6px; }
+  .romy-question { font-size: 12px; color: #7a9a6a; margin-bottom: 8px; font-weight: 500; }
+  .romy-answer {
+    font-size: 22px;
+    font-weight: 700;
+    min-height: 32px;
+    transition: all 0.3s;
+    letter-spacing: -0.01em;
+  }
+  .romy-tap-hint { font-size: 10px; color: #a0ba90; margin-top: 6px; letter-spacing: 0.05em; }
+  @keyframes popIn {
+    0%   { transform: scale(0.7); opacity: 0; }
+    70%  { transform: scale(1.15); }
+    100% { transform: scale(1);   opacity: 1; }
+  }
+  .romy-answer.pop { animation: popIn 0.35s ease both; }
 
-  /* Note Board */
+  /* Notes */
   .card-notes { background: var(--butter); }
-
   .note-textarea {
     width: 100%;
     min-height: 100px;
@@ -216,18 +234,13 @@
     outline: none;
     line-height: 1.6;
   }
-
   .note-textarea:focus { border-color: rgba(0,0,0,0.15); }
   .note-textarea::placeholder { color: var(--ink-faint); }
 
   /* ---- CENTER COL ---- */
-  .center-col {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
-  }
+  .center-col { display: flex; flex-direction: column; gap: var(--gap); }
 
-  /* Today's events */
+  /* Today */
   .card-today { background: var(--blush); }
 
   .today-empty {
@@ -245,15 +258,15 @@
     padding: 10px 0;
     border-bottom: 1px solid rgba(0,0,0,0.05);
   }
-
   .event-item:last-child { border-bottom: none; }
 
   .event-time {
     font-size: 11px;
     color: var(--ink-faint);
-    min-width: 50px;
+    min-width: 54px;
     padding-top: 2px;
-    font-weight: 400;
+    font-weight: 500;
+    flex-shrink: 0;
   }
 
   .event-dot {
@@ -263,27 +276,37 @@
     flex-shrink: 0;
   }
 
-  .event-title { font-size: 13px; font-weight: 400; line-height: 1.4; }
-  .event-cal   { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+  .event-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--ink);
+    text-decoration: none;
+    transition: color 0.15s;
+  }
+  a.event-title:hover { color: #6090c0; text-decoration: underline; }
 
-  /* Calendar owner badge */
+  .event-meta { font-size: 11px; color: var(--ink-faint); margin-top: 2px; }
+
   .owner-badge {
     display: inline-block;
     font-size: 10px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.04em;
     border-radius: 4px;
     padding: 1px 6px;
     margin-top: 3px;
   }
-  .owner-badge.jess {
-    background: #fce8ec;
-    color: var(--jess-color);
-  }
-  .owner-badge.rob {
-    background: #dce8f5;
-    color: var(--rob-color);
-  }
+  .owner-badge.jess { background: #fce8ec; color: var(--jess-color); }
+  .owner-badge.rob  { background: #dce8f5; color: var(--rob-color);  }
+
+  /* Calendar connect section */
+  .cal-status { font-size: 11px; color: var(--ink-faint); margin-bottom: 4px; }
+
+  /* Calendar legend */
+  .cal-legend { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .cal-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--ink-soft); }
+  .cal-legend-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
   /* Weekly calendar */
   .card-week { background: var(--sky); flex: 1; }
@@ -294,47 +317,17 @@
     gap: 8px;
   }
 
-  .week-day {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .week-day-name {
-    font-size: 10px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-
+  .week-day { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+  .week-day-name { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-faint); }
   .week-day-num {
     width: 32px; height: 32px;
     border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    font-weight: 400;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 400;
   }
+  .week-day-num.today { background: #6090c0; color: white; font-weight: 600; }
 
-  .week-day-num.today {
-    background: #6090c0;
-    color: white;
-  }
-
-  .week-event-dot {
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: #6090c0;
-  }
-
-  .week-events-list {
-    margin-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
+  .week-events-list { margin-top: 16px; display: flex; flex-direction: column; gap: 6px; }
 
   .week-event-item {
     display: flex;
@@ -345,20 +338,34 @@
     background: rgba(255,255,255,0.5);
     border-radius: 8px;
   }
+  .week-event-day-tag { font-size: 10px; font-weight: 600; color: #6090c0; min-width: 28px; }
+  .week-event-time { font-size: 10px; color: var(--ink-faint); min-width: 44px; flex-shrink: 0; }
 
-  .week-event-day-tag {
-    font-size: 10px;
+  a.week-event-title {
+    font-size: 12px;
+    flex: 1;
+    color: var(--ink);
+    text-decoration: none;
     font-weight: 500;
-    color: #6090c0;
-    min-width: 28px;
   }
+  a.week-event-title:hover { color: #6090c0; text-decoration: underline; }
 
   /* ---- RIGHT COL ---- */
-  .right-col {
-    display: flex;
-    flex-direction: column;
-    gap: var(--gap);
+  .right-col { display: flex; flex-direction: column; gap: var(--gap); }
+
+  /* Weather */
+  .forecast-strip { display: flex; gap: 8px; margin-top: 12px; }
+  .forecast-day {
+    flex: 1;
+    background: rgba(255,255,255,0.5);
+    border-radius: 10px;
+    padding: 8px 6px;
+    text-align: center;
   }
+  .forecast-name { font-size: 10px; color: var(--ink-faint); letter-spacing: 0.05em; }
+  .forecast-icon { font-size: 18px; margin: 4px 0; }
+  .forecast-hi   { font-size: 12px; font-weight: 600; }
+  .forecast-lo   { font-size: 10px; color: var(--ink-faint); }
 
   /* Menu */
   .card-menu { background: var(--lavender); flex: 1; }
@@ -366,19 +373,18 @@
   .menu-day {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
     padding: 7px 0;
     border-bottom: 1px solid rgba(0,0,0,0.05);
   }
-
   .menu-day:last-child { border-bottom: none; }
 
   .menu-day-name {
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: 0.05em;
     color: var(--ink-soft);
-    min-width: 32px;
+    min-width: 30px;
   }
 
   .menu-meal-input {
@@ -390,139 +396,47 @@
     font-family: 'Nunito', sans-serif;
     font-size: 13px;
     color: var(--ink);
-    text-align: right;
     padding: 2px 4px;
     cursor: text;
     transition: border-color 0.15s, background 0.15s;
     border-radius: 4px;
+    min-width: 0;
   }
-
-  .menu-meal-input:hover {
-    background: rgba(255,255,255,0.5);
-    border-bottom-color: rgba(0,0,0,0.12);
-  }
-
-  .menu-meal-input:focus {
-    background: rgba(255,255,255,0.7);
-    border-bottom-color: #a090c0;
-    outline: none;
-  }
-
+  .menu-meal-input:hover   { background: rgba(255,255,255,0.5); border-bottom-color: rgba(0,0,0,0.12); }
+  .menu-meal-input:focus   { background: rgba(255,255,255,0.7); border-bottom-color: #a090c0; outline: none; }
   .menu-meal-input::placeholder { color: var(--ink-faint); font-style: italic; }
 
-  /* ---- CALENDAR CONNECT SECTION ---- */
-  .cal-connect-section {
+  /* Menu owner toggle */
+  .menu-owner-toggle {
     display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 10px;
-  }
-
-  .cal-person-row {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .cal-auth-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: white;
-    border: 1.5px solid rgba(0,0,0,0.1);
-    border-radius: 8px;
-    padding: 7px 13px;
-    font-family: 'Nunito', sans-serif;
-    font-size: 12px;
-    cursor: pointer;
-    color: var(--ink);
-    transition: background 0.15s, border-color 0.15s;
-  }
-
-  .cal-auth-btn:hover { background: #f5f5f5; }
-
-  .cal-auth-btn.jess-btn {
-    border-color: rgba(212, 122, 143, 0.35);
-  }
-  .cal-auth-btn.jess-btn:hover { background: #fdf0f2; }
-
-  .cal-auth-btn.rob-btn {
-    border-color: rgba(90, 143, 192, 0.35);
-  }
-  .cal-auth-btn.rob-btn:hover { background: #f0f5fd; }
-
-  .cal-auth-btn.connected {
-    background: rgba(80,180,80,0.08);
-    border-color: rgba(80,180,80,0.3);
-    color: #4a9a4a;
-    cursor: default;
-  }
-
-  .cal-auth-btn.connected:hover { background: rgba(80,180,80,0.08); }
-
-  .gcal-icon {
-    width: 16px; height: 16px;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid rgba(0,0,0,0.08);
     flex-shrink: 0;
   }
 
-  .cal-person-label {
-    font-size: 11px;
-    font-weight: 500;
-    letter-spacing: 0.04em;
-  }
-
-  .cal-person-label.jess { color: var(--jess-color); }
-  .cal-person-label.rob  { color: var(--rob-color); }
-
-  .cal-status {
-    font-size: 11px;
+  .menu-owner-btn {
+    background: transparent;
+    border: none;
+    padding: 3px 7px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.03em;
     color: var(--ink-faint);
-    margin-bottom: 4px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
   }
-
-  /* Calendar legend */
-  .cal-legend {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    margin-bottom: 12px;
-  }
-
-  .cal-legend-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
+  .menu-owner-btn:hover { background: rgba(0,0,0,0.04); }
+  .menu-owner-btn.active-jess { background: #fce8ec; color: var(--jess-color); }
+  .menu-owner-btn.active-rob  { background: #dce8f5; color: var(--rob-color);  }
+  .menu-owner-btn.active-both {
+    background: linear-gradient(90deg, #fce8ec 0%, #dce8f5 100%);
     color: var(--ink-soft);
   }
 
-  .cal-legend-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-
-  /* Weather forecast strip */
-  .forecast-strip {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-  }
-
-  .forecast-day {
-    flex: 1;
-    background: rgba(255,255,255,0.5);
-    border-radius: 10px;
-    padding: 8px 6px;
-    text-align: center;
-  }
-
-  .forecast-name { font-size: 10px; color: var(--ink-faint); letter-spacing: 0.05em; }
-  .forecast-icon { font-size: 18px; margin: 4px 0; }
-  .forecast-hi   { font-size: 12px; font-weight: 500; }
-  .forecast-lo   { font-size: 10px; color: var(--ink-faint); }
-
-  /* Loading / error states */
+  /* Loading */
   .loading-text { font-size: 12px; color: var(--ink-faint); font-style: italic; }
 
   /* Animations */
@@ -530,55 +444,31 @@
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+  .card, .topbar { animation: fadeUp 0.5s ease both; }
+  .topbar            { animation-delay: 0.00s; }
+  .card-baby         { animation-delay: 0.08s; }
+  .card-romy         { animation-delay: 0.12s; }
+  .card-notes        { animation-delay: 0.16s; }
+  .card-today        { animation-delay: 0.10s; }
+  .card-week         { animation-delay: 0.14s; }
+  .card-weather-ext  { animation-delay: 0.12s; }
+  .card-menu         { animation-delay: 0.18s; }
 
-  .card, .topbar {
-    animation: fadeUp 0.5s ease both;
-  }
-
-  .topbar           { animation-delay: 0.0s; }
-  .card-baby        { animation-delay: 0.08s; }
-  .card-romy        { animation-delay: 0.12s; }
-  .card-notes       { animation-delay: 0.16s; }
-  .card-today       { animation-delay: 0.10s; }
-  .card-week        { animation-delay: 0.14s; }
-  .card-weather-ext { animation-delay: 0.12s; }
-  .card-menu        { animation-delay: 0.18s; }
-
-  .divider-dot { color: var(--ink-faint); margin: 0 4px; }
-
-  /* ---- DASHBOARD TITLE ---- */
   .dashboard-title {
     grid-column: 1 / -1;
     text-align: center;
     font-family: 'Nunito', sans-serif;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
     color: var(--ink-faint);
     padding-bottom: 4px;
     animation: fadeUp 0.4s ease both;
-    animation-delay: 0s;
   }
 
-  /* ---- WEATHER LINK ---- */
-  .weather-link {
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
-  .weather-link:hover .forecast-day {
-    background: rgba(255,255,255,0.75);
-    transition: background 0.15s;
-  }
-  .card-label a {
-    color: inherit;
-    text-decoration: none;
-    border-bottom: 1px dotted var(--ink-faint);
-  }
-  .card-label a:hover {
-    color: var(--ink-soft);
-  }
+  .card-label a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
+  .card-label a:hover { color: var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -595,13 +485,18 @@
     </div>
     <div class="topbar-time" id="topbar-time">—</div>
     <div class="topbar-right">
-      <div class="weather-pill" id="weather-pill">
+      <div class="weather-pill">
         <span class="weather-icon" id="w-icon">☁️</span>
         <div>
           <div class="weather-temp" id="w-temp">—°</div>
           <div class="weather-desc" id="w-desc">Loading…</div>
         </div>
       </div>
+      <!-- Single sign-in button -->
+      <button class="gcal-signin-btn" id="gcal-signin-btn" onclick="connectAll()">
+        <svg class="gcal-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
     </div>
   </div>
 
@@ -614,14 +509,17 @@
       <span class="baby-emoji">🤰</span>
       <div class="baby-days" id="baby-days">—</div>
       <div class="baby-days-label">days to go</div>
-      <div class="baby-due" id="baby-due-line">Due May 1, 2026</div>
+      <div class="baby-due">Due May 1, 2026</div>
     </div>
 
     <!-- Romy -->
-    <div class="card card-romy">
-      <div class="card-label">Good Boy</div>
+    <div class="card card-romy" onclick="rollRomy()" title="Click to find out!">
+      <div class="card-label">Daily Verdict</div>
       <span class="romy-emoji">🐶</span>
       <div class="romy-name">Romy</div>
+      <div class="romy-question">Is Romy a good boy?</div>
+      <div class="romy-answer" id="romy-answer">—</div>
+      <div class="romy-tap-hint">click to find out</div>
     </div>
 
     <!-- Notes -->
@@ -638,27 +536,7 @@
     <!-- Today -->
     <div class="card card-today">
       <div class="card-label">Today's Schedule</div>
-
-      <!-- Connect buttons -->
-      <div class="cal-connect-section" id="cal-connect-section">
-        <div class="cal-status" id="cal-status-msg">Connect calendars to see your events.</div>
-        <div class="cal-person-row">
-          <span class="cal-person-label jess">Jess</span>
-          <button class="cal-auth-btn jess-btn" id="jess-connect-btn" onclick="connectCalendar('jess')">
-            <svg class="gcal-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Connect Jess's Calendar
-          </button>
-        </div>
-        <div class="cal-person-row">
-          <span class="cal-person-label rob">Rob</span>
-          <button class="cal-auth-btn rob-btn" id="rob-connect-btn" onclick="connectCalendar('rob')">
-            <svg class="gcal-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-            Connect Rob's Calendar
-          </button>
-        </div>
-      </div>
-
-      <!-- Legend (hidden until at least one calendar connected) -->
+      <div class="cal-status" id="cal-status-msg">Sign in with Google to load calendars.</div>
       <div class="cal-legend" id="cal-legend" style="display:none">
         <div class="cal-legend-item">
           <div class="cal-legend-dot" style="background: var(--jess-color)"></div>
@@ -669,7 +547,6 @@
           <span>Rob</span>
         </div>
       </div>
-
       <div id="today-events"></div>
     </div>
 
@@ -678,7 +555,7 @@
       <div class="card-label">This Week</div>
       <div class="week-grid" id="week-grid"></div>
       <div class="week-events-list" id="week-events-list">
-        <div class="loading-text">Connect a calendar to see upcoming events.</div>
+        <div class="loading-text">Sign in to see upcoming events.</div>
       </div>
     </div>
 
@@ -707,23 +584,31 @@
 
 <script>
 // ============================================================
+//  CONFIG — replace with your actual IDs
+// ============================================================
+const GCAL_CLIENT_ID = '774777989805-ok8nua42j36ig9k3cgqep5dneleks0cf.apps.googleusercontent.com';
+const SHEET_ID       = '1F1uBSqAOJu4ZnWhsa6NpA_CxTpyTd_YGjsU_1IdwBug';
+
+// Rob's calendar email — so the signed-in account can fetch his events too
+// Make sure Rob has shared his calendar with whichever Google account signs in
+const ROB_CALENDAR_ID = 'rob@gmail.com'; // <-- replace with Rob's actual Google email
+
+const JESS_COLOR = '#d47a8f';
+const ROB_COLOR  = '#5a8fc0';
+
+// ============================================================
 //  CLOCK + DATE
 // ============================================================
 function updateClock() {
-  const now = new Date();
+  const now    = new Date();
   const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
   const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-
-  document.getElementById('topbar-date').textContent =
-    `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
-  document.getElementById('topbar-day').textContent =
-    days[now.getDay()];
-
+  document.getElementById('topbar-date').textContent = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('topbar-day').textContent  = days[now.getDay()];
   let h = now.getHours(), m = now.getMinutes();
   const ampm = h >= 12 ? 'pm' : 'am';
   h = h % 12 || 12;
-  document.getElementById('topbar-time').textContent =
-    `${h}:${String(m).padStart(2,'0')} ${ampm}`;
+  document.getElementById('topbar-time').textContent = `${h}:${String(m).padStart(2,'0')} ${ampm}`;
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -733,11 +618,8 @@ updateClock();
 // ============================================================
 function updateBabyCountdown() {
   const due  = new Date('2026-05-01T00:00:00');
-  const now  = new Date();
-  const diff = due - now;
-  const days = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  const days = Math.max(0, Math.ceil((due - new Date()) / 86400000));
   document.getElementById('baby-days').textContent = days;
-
   if (days === 0) {
     document.querySelector('.baby-days-label').textContent = '🎉 Due today!';
     document.querySelector('.baby-emoji').textContent = '👶';
@@ -747,28 +629,51 @@ updateBabyCountdown();
 setInterval(updateBabyCountdown, 60000);
 
 // ============================================================
+//  ROMY — GOOD BOY RANDOM VERDICT
+// ============================================================
+const ROMY_ANSWERS = [
+  { text: 'Obviously YES 🐾',  color: '#5a9a4a' },
+  { text: 'Absolutely YES ✨',  color: '#5a9a4a' },
+  { text: 'The BEST boy! 🌟',   color: '#5a9a4a' },
+  { text: '100% good boy 💚',   color: '#5a9a4a' },
+  { text: 'Without question 🐶',color: '#5a9a4a' },
+  { text: 'YES (ask again?) 😄',color: '#5a9a4a' },
+  { text: 'Signs point to YES 🐾', color: '#5a9a4a' },
+  { text: 'Ehh… maybe 🤔',     color: '#b09030' },
+  { text: 'Jury is out 🫤',    color: '#b09030' },
+];
+
+function rollRomy() {
+  const el  = document.getElementById('romy-answer');
+  const ans = ROMY_ANSWERS[Math.floor(Math.random() * ROMY_ANSWERS.length)];
+  el.textContent  = ans.text;
+  el.style.color  = ans.color;
+  el.classList.remove('pop');
+  void el.offsetWidth; // force reflow to restart animation
+  el.classList.add('pop');
+}
+
+// Roll once on load
+rollRomy();
+
+// ============================================================
 //  WEEK GRID
 // ============================================================
 function buildWeekGrid() {
-  const now   = new Date();
-  const dow   = now.getDay();
+  const now  = new Date();
   const start = new Date(now);
-  start.setDate(now.getDate() - dow);
-
+  start.setDate(now.getDate() - now.getDay());
   const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
   const grid = document.getElementById('week-grid');
   grid.innerHTML = '';
-
   for (let i = 0; i < 7; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    const isToday = d.toDateString() === now.toDateString();
-
     const col = document.createElement('div');
     col.className = 'week-day';
     col.innerHTML = `
       <div class="week-day-name">${dayNames[i]}</div>
-      <div class="week-day-num${isToday ? ' today' : ''}">${d.getDate()}</div>
+      <div class="week-day-num${d.toDateString() === now.toDateString() ? ' today' : ''}">${d.getDate()}</div>
     `;
     grid.appendChild(col);
   }
@@ -778,251 +683,232 @@ buildWeekGrid();
 // ============================================================
 //  WEATHER  (Open-Meteo — no API key required)
 // ============================================================
+const wmoIcon = c => c===0?'☀️':c<=2?'⛅':c<=3?'☁️':c<=48?'🌫️':c<=67?'🌧️':c<=77?'🌨️':c<=82?'🌦️':'⛈️';
+const wmoDesc = c => c===0?'Clear':c<=2?'Partly cloudy':c<=3?'Overcast':c<=48?'Foggy':c<=55?'Drizzle':c<=67?'Rain':c<=77?'Snow':c<=82?'Showers':'Thunderstorm';
+
 async function loadWeather() {
   try {
-    const lat = 40.7128, lon = -74.0060;
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
-      `&current=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min` +
-      `&temperature_unit=fahrenheit&wind_speed_unit=mph&forecast_days=5&timezone=America%2FNew_York`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.006`
+      + `&current=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min`
+      + `&temperature_unit=fahrenheit&forecast_days=5&timezone=America%2FNew_York`;
+    const data = await (await fetch(url)).json();
+    const c    = data.current;
+    document.getElementById('w-icon').textContent = wmoIcon(c.weathercode);
+    document.getElementById('w-temp').textContent = `${Math.round(c.temperature_2m)}°`;
+    document.getElementById('w-desc').textContent = wmoDesc(c.weathercode);
 
-    const res  = await fetch(url);
-    const data = await res.json();
-
-    const wmoIcon = (code) => {
-      if (code === 0)  return '☀️';
-      if (code <= 2)   return '⛅';
-      if (code <= 3)   return '☁️';
-      if (code <= 48)  return '🌫️';
-      if (code <= 67)  return '🌧️';
-      if (code <= 77)  return '🌨️';
-      if (code <= 82)  return '🌦️';
-      if (code <= 99)  return '⛈️';
-      return '🌡️';
-    };
-    const wmoDesc = (code) => {
-      if (code === 0)  return 'Clear';
-      if (code <= 2)   return 'Partly cloudy';
-      if (code <= 3)   return 'Overcast';
-      if (code <= 48)  return 'Foggy';
-      if (code <= 55)  return 'Drizzle';
-      if (code <= 67)  return 'Rain';
-      if (code <= 77)  return 'Snow';
-      if (code <= 82)  return 'Showers';
-      return 'Thunderstorm';
-    };
-
-    const curr = data.current;
-    document.getElementById('w-icon').textContent = wmoIcon(curr.weathercode);
-    document.getElementById('w-temp').textContent = `${Math.round(curr.temperature_2m)}°`;
-    document.getElementById('w-desc').textContent = wmoDesc(curr.weathercode);
-
-    const strip  = document.getElementById('forecast-strip');
-    const dayAbbr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const strip = document.getElementById('forecast-strip');
+    const abbr  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     strip.innerHTML = '';
-
     for (let i = 0; i < 5; i++) {
-      const date = new Date(data.daily.time[i] + 'T12:00:00');
-      const isT  = i === 0;
-      const div  = document.createElement('div');
-      div.className = 'forecast-day';
-      div.innerHTML = `
-        <div class="forecast-name">${isT ? 'Today' : dayAbbr[date.getDay()]}</div>
+      const d = new Date(data.daily.time[i] + 'T12:00:00');
+      const el = document.createElement('div');
+      el.className = 'forecast-day';
+      el.innerHTML = `
+        <div class="forecast-name">${i===0?'Today':abbr[d.getDay()]}</div>
         <div class="forecast-icon">${wmoIcon(data.daily.weathercode[i])}</div>
         <div class="forecast-hi">${Math.round(data.daily.temperature_2m_max[i])}°</div>
         <div class="forecast-lo">${Math.round(data.daily.temperature_2m_min[i])}°</div>
       `;
-      strip.appendChild(div);
+      strip.appendChild(el);
     }
   } catch(e) {
     document.getElementById('forecast-strip').innerHTML = '<div class="loading-text">Weather unavailable</div>';
   }
 }
 loadWeather();
-setInterval(loadWeather, 10 * 60 * 1000);
+setInterval(loadWeather, 600000);
 
 // ============================================================
-//  WEEKLY MENU  (synced via Google Sheets)
-//  Sheet structure: column A = day name, column B = meal
-//  Range: Sheet1!A1:B7  (Mon–Sun)
-//  Note: enable "Google Sheets API" in Google Cloud Console
+//  NOTES  (localStorage)
+// ============================================================
+const notesEl = document.getElementById('family-notes');
+notesEl.value = localStorage.getItem('family_notes') || '';
+notesEl.addEventListener('input', () => localStorage.setItem('family_notes', notesEl.value));
+
+// ============================================================
+//  MENU — owner toggle + Google Sheets sync
 // ============================================================
 const menuDays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-const menuList = document.getElementById('menu-list');
 let menuSaveTimer = null;
+let sheetsToken   = null;
 
-// Build the menu DOM with empty inputs — meals populated after Sheets load
-function buildMenuDOM(meals = []) {
-  menuList.innerHTML = '';
+function buildMenuDOM(meals = [], owners = []) {
+  const list = document.getElementById('menu-list');
+  list.innerHTML = '';
   menuDays.forEach((day, i) => {
-    const meal = meals[i] || '';
-    const row  = document.createElement('div');
+    const meal  = meals[i]  || '';
+    const owner = owners[i] || 'both'; // 'jess', 'rob', or 'both'
+
+    const row = document.createElement('div');
     row.className = 'menu-day';
     row.innerHTML = `
       <div class="menu-day-name">${day.slice(0,3)}</div>
-      <input class="menu-meal-input" data-index="${i}" data-day="${day}" value="${meal}" placeholder="— add meal —">
+      <input class="menu-meal-input" data-index="${i}" value="${escHtml(meal)}" placeholder="— add meal —">
+      <div class="menu-owner-toggle" data-index="${i}">
+        <button class="menu-owner-btn ${owner==='jess'?'active-jess':''}" data-owner="jess" data-index="${i}">J</button>
+        <button class="menu-owner-btn ${owner==='both'?'active-both':''}" data-owner="both" data-index="${i}">J+R</button>
+        <button class="menu-owner-btn ${owner==='rob'?'active-rob':''}"  data-owner="rob"  data-index="${i}">R</button>
+      </div>
     `;
-    menuList.appendChild(row);
+    list.appendChild(row);
   });
 
-  menuList.querySelectorAll('.menu-meal-input').forEach(inp => {
+  // Input listeners
+  list.querySelectorAll('.menu-meal-input').forEach(inp => {
     inp.addEventListener('input', () => {
-      // Debounce: save 1.5s after last keystroke
       clearTimeout(menuSaveTimer);
-      menuSaveTimer = setTimeout(() => saveMenuToSheets(), 1500);
+      menuSaveTimer = setTimeout(saveMenu, 1500);
     });
   });
+
+  // Owner toggle listeners
+  list.querySelectorAll('.menu-owner-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx     = btn.dataset.index;
+      const owner   = btn.dataset.owner;
+      const toggles = list.querySelectorAll(`.menu-owner-toggle[data-index="${idx}"] .menu-owner-btn`);
+      toggles.forEach(b => b.className = 'menu-owner-btn');
+      if (owner === 'jess') btn.classList.add('active-jess');
+      if (owner === 'rob')  btn.classList.add('active-rob');
+      if (owner === 'both') btn.classList.add('active-both');
+      clearTimeout(menuSaveTimer);
+      menuSaveTimer = setTimeout(saveMenu, 1500);
+    });
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function getMenuData() {
+  const list = document.getElementById('menu-list');
+  const meals  = [];
+  const owners = [];
+  list.querySelectorAll('.menu-day').forEach((row, i) => {
+    meals.push(row.querySelector('.menu-meal-input').value);
+    const active = row.querySelector('.menu-owner-btn.active-jess, .menu-owner-btn.active-rob, .menu-owner-btn.active-both');
+    owners.push(active ? active.dataset.owner : 'both');
+  });
+  return { meals, owners };
 }
 
 async function loadMenuFromSheets() {
   if (!sheetsToken) return;
   try {
     const res  = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:B7`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7`,
       { headers: { Authorization: `Bearer ${sheetsToken}` } }
     );
     const data = await res.json();
     const rows = data.values || [];
-
-    // If sheet is empty, initialize it with day names
     if (rows.length === 0) {
-      await initSheetDays();
-      buildMenuDOM([]);
+      await initSheet();
+      buildMenuDOM([], []);
       return;
     }
-
-    // Column B holds meals (index 1); may be absent if not yet filled
-    const meals = rows.map(row => row[1] || '');
-    buildMenuDOM(meals);
+    const meals  = rows.map(r => r[1] || '');
+    const owners = rows.map(r => r[2] || 'both');
+    buildMenuDOM(meals, owners);
   } catch(e) {
-    console.warn('Could not load menu from Sheets, using localStorage fallback', e);
-    const meals = menuDays.map(d => localStorage.getItem(`menu_${d}`) || '');
-    buildMenuDOM(meals);
+    console.warn('Sheets load failed, using localStorage', e);
+    const saved = JSON.parse(localStorage.getItem('menu_data') || '{}');
+    buildMenuDOM(saved.meals || [], saved.owners || []);
   }
 }
 
-async function initSheetDays() {
-  // Write day names into column A so the sheet has a clear structure
+async function initSheet() {
+  const values = menuDays.map(d => [d, '', 'both']);
   await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:A7?valueInputOption=RAW`,
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7?valueInputOption=RAW`,
     {
       method: 'PUT',
       headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ values: menuDays.map(d => [d]) })
+      body: JSON.stringify({ values })
     }
   );
 }
 
-async function saveMenuToSheets() {
+async function saveMenu() {
+  const { meals, owners } = getMenuData();
+  // Always save to localStorage as fallback
+  localStorage.setItem('menu_data', JSON.stringify({ meals, owners }));
+
   if (!sheetsToken) return;
-  const inputs = menuList.querySelectorAll('.menu-meal-input');
-  const meals  = Array.from(inputs).map(inp => [inp.value]);
+  const values = menuDays.map((d, i) => [d, meals[i], owners[i]]);
   try {
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!B1:B7?valueInputOption=RAW`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7?valueInputOption=RAW`,
       {
         method: 'PUT',
         headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values: meals })
+        body: JSON.stringify({ values })
       }
     );
   } catch(e) {
-    console.warn('Could not save menu to Sheets', e);
+    console.warn('Could not save to Sheets', e);
   }
 }
 
-// Show empty menu on load — fills in after Google sign-in
-buildMenuDOM();
+// Load from localStorage immediately so menu isn't blank on page load
+const localMenu = JSON.parse(localStorage.getItem('menu_data') || '{}');
+buildMenuDOM(localMenu.meals || [], localMenu.owners || []);
 
 // ============================================================
-//  NOTES  (persisted in localStorage)
+//  GOOGLE SIGN-IN — single sign-in, loads both calendars + menu
 // ============================================================
-const notesEl = document.getElementById('family-notes');
-notesEl.value = localStorage.getItem('family_notes') || '';
-notesEl.addEventListener('input', () => {
-  localStorage.setItem('family_notes', notesEl.value);
-});
+let gisLoaded    = false;
+let tokenClient  = null;
+let accessToken  = null;
 
-// ============================================================
-//  GOOGLE CALENDAR — DUAL ACCOUNT
-//  Instructions:
-//    1. Go to https://console.cloud.google.com
-//    2. Create a project → Enable "Google Calendar API"
-//    3. Create OAuth 2.0 Client ID (Web app)
-//    4. Add this file's origin to Authorized JS origins
-//    5. Paste your client_id below
-//
-//  Both Jess and Rob use the SAME client ID — they each sign in
-//  with their own Google account when they click their button.
-// ============================================================
-const GCAL_CLIENT_ID = '774777989805-ok8nua42j36ig9k3cgqep5dneleks0cf.apps.googleusercontent.com';
-
-// Google Sheet ID for shared menu
-// Note: also enable "Google Sheets API" in Google Cloud Console
-const SHEET_ID = '1F1uBSqAOJu4ZnWhsa6NpA_CxTpyTd_YGjsU_1IdwBug';
-
-let gisLoaded = false;
-const tokens = { jess: null, rob: null };
-const tokenClients = { jess: null, rob: null };
-let sheetsToken = null; // first connected person's token, used for menu
-
-const JESS_COLOR = '#d47a8f';
-const ROB_COLOR  = '#5a8fc0';
-
-// Load Google Identity Services
 const gisScript  = document.createElement('script');
 gisScript.src    = 'https://accounts.google.com/gsi/client';
 gisScript.async  = true;
-gisScript.defer  = true;
 gisScript.onload = () => { gisLoaded = true; };
 document.head.appendChild(gisScript);
 
-function connectCalendar(person) {
-  if (!gisLoaded) { alert('Google Sign-In is loading, try again in a moment.'); return; }
-  if (GCAL_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-    showCalPlaceholder();
-    return;
-  }
+function connectAll() {
+  if (!gisLoaded) { alert('Google Sign-In still loading, try again in a moment.'); return; }
 
-  // Each person gets their own token client so Google prompts the right account
-  tokenClients[person] = google.accounts.oauth2.initTokenClient({
+  tokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GCAL_CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/calendar.readonly https://www.googleapis.com/auth/spreadsheets',
-    callback: (resp) => {
-      if (resp.error) return;
-      tokens[person] = resp.access_token;
+    scope: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/spreadsheets'
+    ].join(' '),
+    callback: async (resp) => {
+      if (resp.error) { console.error(resp); return; }
+      accessToken = resp.access_token;
+      sheetsToken = resp.access_token;
 
-      // Update button to "connected" state
-      const btn = document.getElementById(`${person}-connect-btn`);
+      // Update sign-in button
+      const btn = document.getElementById('gcal-signin-btn');
       btn.classList.add('connected');
       btn.innerHTML = `
-        <svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.5"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        ✓ ${person === 'jess' ? 'Jess' : 'Rob'} connected
+        <svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        ✓ Signed in
       `;
       btn.disabled = true;
 
-      // Show legend as soon as one calendar is connected
+      document.getElementById('cal-status-msg').textContent = 'Loading events…';
       document.getElementById('cal-legend').style.display = 'flex';
 
-      document.getElementById('cal-status-msg').textContent = '';
-      fetchAndMergeEvents();
-
-      // First person to connect provides the Sheets token
-      if (!sheetsToken) {
-        sheetsToken = resp.access_token;
-        loadMenuFromSheets();
-      }
+      await fetchAndMergeEvents();
+      await loadMenuFromSheets();
     }
   });
 
-  // prompt: 'select_account' so each person picks their own Google account
-  tokenClients[person].requestAccessToken({ prompt: 'select_account' });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-async function fetchEventsForToken(accessToken, ownerName) {
+// ============================================================
+//  CALENDAR FETCH — primary (Jess) + Rob's shared calendar
+// ============================================================
+async function fetchCalendarEvents(calendarId, ownerLabel) {
   const now   = new Date();
   const endWk = new Date(now);
   endWk.setDate(now.getDate() + 7);
-
   const params = new URLSearchParams({
     timeMin: now.toISOString(),
     timeMax: endWk.toISOString(),
@@ -1030,49 +916,54 @@ async function fetchEventsForToken(accessToken, ownerName) {
     orderBy: 'startTime',
     maxResults: 30,
   });
-
   const res  = await fetch(
-    `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params}`,
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   const data = await res.json();
-  // Tag each event with its owner
-  return (data.items || []).map(ev => ({ ...ev, _owner: ownerName }));
+  return (data.items || []).map(ev => ({ ...ev, _owner: ownerLabel }));
 }
 
 async function fetchAndMergeEvents() {
   try {
-    const fetches = [];
-    if (tokens.jess) fetches.push(fetchEventsForToken(tokens.jess, 'jess'));
-    if (tokens.rob)  fetches.push(fetchEventsForToken(tokens.rob,  'rob'));
-
-    const results = await Promise.all(fetches);
-    const allEvents = results.flat();
-
-    // Sort by start time
-    allEvents.sort((a, b) => {
-      const aTime = new Date(a.start.dateTime || a.start.date);
-      const bTime = new Date(b.start.dateTime || b.start.date);
-      return aTime - bTime;
-    });
-
-    renderCalendarEvents(allEvents);
+    const [jessEvts, robEvts] = await Promise.all([
+      fetchCalendarEvents('primary', 'jess'),
+      fetchCalendarEvents(ROB_CALENDAR_ID, 'rob'),
+    ]);
+    const all = [...jessEvts, ...robEvts].sort((a, b) =>
+      new Date(a.start.dateTime || a.start.date) - new Date(b.start.dateTime || b.start.date)
+    );
+    renderCalendarEvents(all);
+    document.getElementById('cal-status-msg').textContent = '';
   } catch(e) {
     document.getElementById('cal-status-msg').textContent = 'Could not load events.';
+    console.error(e);
   }
 }
 
-function ownerColor(owner) {
-  return owner === 'jess' ? JESS_COLOR : ROB_COLOR;
+// ============================================================
+//  FORMAT HELPERS
+// ============================================================
+function formatTime(dtString) {
+  if (!dtString) return 'All day';
+  const d = new Date(dtString);
+  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
-function renderCalendarEvents(events) {
-  const todayStr = new Date().toDateString();
+function gcalEventLink(ev) {
+  // Construct a link to the specific event in Google Calendar
+  if (!ev.htmlLink) return null;
+  return ev.htmlLink;
+}
 
-  const todayEvts = events.filter(ev => {
-    const start = new Date(ev.start.dateTime || ev.start.date);
-    return start.toDateString() === todayStr;
-  });
+// ============================================================
+//  RENDER CALENDAR EVENTS
+// ============================================================
+function renderCalendarEvents(events) {
+  const todayStr  = new Date().toDateString();
+  const todayEvts = events.filter(ev =>
+    new Date(ev.start.dateTime || ev.start.date).toDateString() === todayStr
+  );
 
   const container = document.getElementById('today-events');
   container.innerHTML = '';
@@ -1081,48 +972,54 @@ function renderCalendarEvents(events) {
     container.innerHTML = '<div class="today-empty">Nothing on the books today ✨</div>';
   } else {
     todayEvts.forEach(ev => {
-      const start = ev.start.dateTime
-        ? new Date(ev.start.dateTime).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})
-        : 'All day';
-      const color = ownerColor(ev._owner);
-      const ownerLabel = ev._owner === 'jess' ? 'Jess' : 'Rob';
+      const time  = formatTime(ev.start.dateTime);
+      const color = ev._owner === 'jess' ? JESS_COLOR : ROB_COLOR;
+      const label = ev._owner === 'jess' ? 'Jess' : 'Rob';
+      const link  = gcalEventLink(ev);
+      const titleEl = link
+        ? `<a class="event-title" href="${link}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
+        : `<span class="event-title">${ev.summary || 'Untitled'}</span>`;
       const div = document.createElement('div');
       div.className = 'event-item';
       div.innerHTML = `
-        <div class="event-time">${start}</div>
+        <div class="event-time">${time}</div>
         <div class="event-dot" style="background:${color}"></div>
         <div>
-          <div class="event-title">${ev.summary || 'Untitled'}</div>
-          ${ev.location ? `<div class="event-cal">${ev.location}</div>` : ''}
-          <span class="owner-badge ${ev._owner}">${ownerLabel}</span>
+          ${titleEl}
+          ${ev.location ? `<div class="event-meta">${ev.location}</div>` : ''}
+          <span class="owner-badge ${ev._owner}">${label}</span>
         </div>
       `;
       container.appendChild(div);
     });
   }
 
-  // Week events (non-today, next 7 days)
-  const weekList = document.getElementById('week-events-list');
+  // Week events
+  const weekList  = document.getElementById('week-events-list');
   weekList.innerHTML = '';
-  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-  const futureEvts = events.filter(ev => {
-    const start = new Date(ev.start.dateTime || ev.start.date);
-    return start.toDateString() !== todayStr;
-  }).slice(0, 10);
+  const dayAbbr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const futureEvts = events
+    .filter(ev => new Date(ev.start.dateTime || ev.start.date).toDateString() !== todayStr)
+    .slice(0, 10);
 
   if (futureEvts.length === 0) {
     weekList.innerHTML = '<div class="loading-text">No upcoming events this week.</div>';
   } else {
     futureEvts.forEach(ev => {
       const start = new Date(ev.start.dateTime || ev.start.date);
-      const color = ownerColor(ev._owner);
-      const div = document.createElement('div');
+      const color = ev._owner === 'jess' ? JESS_COLOR : ROB_COLOR;
+      const time  = ev.start.dateTime ? formatTime(ev.start.dateTime) : 'All day';
+      const link  = gcalEventLink(ev);
+      const div   = document.createElement('div');
       div.className = 'week-event-item';
       div.innerHTML = `
-        <div class="week-event-day-tag">${days[start.getDay()]}</div>
-        <div class="event-dot" style="background:${color};width:6px;height:6px;border-radius:50%;flex-shrink:0"></div>
-        <div style="font-size:12px;flex:1">${ev.summary || 'Untitled'}</div>
-        <span class="owner-badge ${ev._owner}" style="font-size:9px;padding:1px 5px">${ev._owner === 'jess' ? 'J' : 'R'}</span>
+        <div class="week-event-day-tag">${dayAbbr[start.getDay()]}</div>
+        <div style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0"></div>
+        <div class="week-event-time">${time}</div>
+        ${link
+          ? `<a class="week-event-title" href="${link}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
+          : `<span class="week-event-title">${ev.summary || 'Untitled'}</span>`}
+        <span class="owner-badge ${ev._owner}" style="font-size:9px;padding:1px 5px">${ev._owner==='jess'?'J':'R'}</span>
       `;
       weekList.appendChild(div);
     });
@@ -1130,46 +1027,35 @@ function renderCalendarEvents(events) {
 }
 
 // ============================================================
-//  DEMO MODE — shown when no client ID is set
+//  DEMO MODE
 // ============================================================
-function showCalPlaceholder() {
-  document.getElementById('jess-connect-btn').classList.add('connected');
-  document.getElementById('jess-connect-btn').innerHTML = '✓ Jess connected (demo)';
-  document.getElementById('jess-connect-btn').disabled = true;
-  document.getElementById('rob-connect-btn').classList.add('connected');
-  document.getElementById('rob-connect-btn').innerHTML = '✓ Rob connected (demo)';
-  document.getElementById('rob-connect-btn').disabled = true;
-  document.getElementById('cal-status-msg').textContent = '(Demo mode — add your Google Client ID to connect)';
+function showDemo() {
+  document.getElementById('gcal-signin-btn').classList.add('connected');
+  document.getElementById('gcal-signin-btn').innerHTML = '★ Demo mode';
+  document.getElementById('gcal-signin-btn').disabled = true;
+  document.getElementById('cal-status-msg').textContent = '(Demo — add your Google Client ID to connect live)';
   document.getElementById('cal-legend').style.display = 'flex';
 
   const now  = new Date();
-  const fmt  = (h, m) => { const d = new Date(now); d.setHours(h, m, 0); return d; };
-  const next = (offset, h, m) => {
-    const d = new Date(now);
-    d.setDate(d.getDate() + offset);
-    d.setHours(h, m, 0);
-    return d;
-  };
+  const fmt  = (h, m) => { const d = new Date(now); d.setHours(h, m, 0); return d.toISOString(); };
+  const next = (off, h, m) => { const d = new Date(now); d.setDate(d.getDate()+off); d.setHours(h,m,0); return d.toISOString(); };
 
   const fakeEvents = [
-    { summary: 'OB Appointment',           start: { dateTime: fmt(10, 0).toISOString()     }, location: 'NYU Langone', _owner: 'jess' },
-    { summary: 'Lunch with Maya',           start: { dateTime: fmt(12, 30).toISOString()    }, _owner: 'jess' },
-    { summary: 'Work call',                 start: { dateTime: fmt(14, 0).toISOString()     }, _owner: 'rob'  },
-    { summary: 'Yoga class',                start: { dateTime: next(1, 9, 0).toISOString()  }, _owner: 'jess' },
-    { summary: 'Dinner with the Garcias',   start: { dateTime: next(1, 19, 0).toISOString() }, _owner: 'rob'  },
-    { summary: 'Baby shower planning call', start: { dateTime: next(2, 18, 0).toISOString() }, _owner: 'jess' },
-    { summary: 'Grocery run 🛒',             start: { dateTime: next(3, 11, 0).toISOString() }, _owner: 'rob'  },
-    { summary: 'Walk with Romy 🐾',          start: { dateTime: next(4, 8, 30).toISOString()}, _owner: 'jess' },
-    { summary: 'Dentist',                   start: { dateTime: next(5, 10, 0).toISOString() }, _owner: 'rob'  },
+    { summary: 'OB Appointment',         start: { dateTime: fmt(10,0)    }, location: 'NYU Langone', _owner:'jess', htmlLink:'https://calendar.google.com' },
+    { summary: 'Lunch with Maya',         start: { dateTime: fmt(12,30)   }, _owner:'jess', htmlLink:'https://calendar.google.com' },
+    { summary: 'Work standup',            start: { dateTime: fmt(9,0)     }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
+    { summary: 'Yoga class',              start: { dateTime: next(1,9,0)  }, _owner:'jess', htmlLink:'https://calendar.google.com' },
+    { summary: 'Dinner with the Garcias', start: { dateTime: next(1,19,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
+    { summary: 'Baby shower call',        start: { dateTime: next(2,18,0) }, _owner:'jess', htmlLink:'https://calendar.google.com' },
+    { summary: 'Grocery run 🛒',           start: { dateTime: next(3,11,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
+    { summary: 'Walk with Romy 🐾',        start: { dateTime: next(4,8,30) }, _owner:'jess', htmlLink:'https://calendar.google.com' },
+    { summary: 'Dentist',                 start: { dateTime: next(5,10,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
   ];
   renderCalendarEvents(fakeEvents);
 }
 
-// Auto show demo on load only if no real Client ID is set
 window.addEventListener('load', () => {
-  if (GCAL_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') {
-    setTimeout(showCalPlaceholder, 300);
-  }
+  if (GCAL_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') setTimeout(showDemo, 300);
 });
 </script>
 </body>
