@@ -505,6 +505,59 @@
 
   .card-label a { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--ink-faint); }
   .card-label a:hover { color: var(--ink-soft); }
+
+  /* ---- LAST UPDATED PILL ---- */
+  .last-updated-pill {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.07);
+    border-radius: 20px;
+    padding: 5px 12px;
+    font-size: 11px;
+    color: var(--ink-faint);
+    white-space: nowrap;
+    position: relative;
+    cursor: default;
+  }
+  .last-updated-pill.stale {
+    background: rgba(255, 240, 220, 0.8);
+    border-color: rgba(200,140,60,0.25);
+    color: #b07030;
+  }
+  .last-updated-pill .pill-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #80c080;
+    flex-shrink: 0;
+  }
+  .last-updated-pill.stale .pill-dot { background: #e09040; }
+
+  /* Tooltip */
+  .last-updated-pill .pill-tooltip {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background: rgba(46,46,46,0.92);
+    color: white;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .last-updated-pill .pill-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    right: 16px;
+    border: 5px solid transparent;
+    border-bottom-color: rgba(46,46,46,0.92);
+  }
+  .last-updated-pill:hover .pill-tooltip { display: block; }
 </style>
 </head>
 <body>
@@ -528,7 +581,13 @@
           <div class="weather-desc" id="w-desc">Loading…</div>
         </div>
       </div>
-      <!-- Single sign-in button -->
+      <!-- Last updated pill -->
+      <div class="last-updated-pill" id="last-updated-pill">
+        <span class="pill-dot"></span>
+        <span id="last-updated-text">—</span>
+        <span class="pill-tooltip" id="pill-tooltip">Sign in with Google to refresh</span>
+      </div>
+      <!-- Sign-in button — always visible -->
       <button class="gcal-signin-btn" id="gcal-signin-btn" onclick="connectAll()">
         <svg class="gcal-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
         Sign in with Google
@@ -930,15 +989,23 @@ function formatCacheAge(ms) {
 }
 
 function updateCacheTimestamp() {
-  const age = getCacheAge();
-  const el  = document.getElementById('cache-timestamp');
-  if (age !== null && el) {
-    el.style.display = 'block';
-    el.textContent   = `Last updated ${formatCacheAge(age)}`;
-  }
+  const age  = getCacheAge();
+  const pill = document.getElementById('last-updated-pill');
+  const text = document.getElementById('last-updated-text');
+  const tip  = document.getElementById('pill-tooltip');
+  if (age === null || !pill) return;
+
+  pill.style.display = 'flex';
+  text.textContent   = `Updated ${formatCacheAge(age)}`;
+
+  const isStale = age > 24 * 60 * 60 * 1000; // 24 hours
+  pill.classList.toggle('stale', isStale);
+  tip.textContent = isStale
+    ? '⚠️ Data is over 24h old — sign in to refresh'
+    : 'Sign in with Google to refresh';
 }
 
-// Update "last updated" text every minute
+// Update pill every minute
 setInterval(updateCacheTimestamp, 60000);
 
 // Load from localStorage immediately so menu isn't blank on page load
@@ -952,9 +1019,6 @@ window.addEventListener('load', () => {
     document.getElementById('cal-status-msg').textContent = '';
     document.getElementById('cal-legend').style.display   = 'flex';
     document.getElementById('refresh-btn').style.display  = 'inline-flex';
-    // Hide sign-in button since we have cached data
-    const signinBtn = document.getElementById('gcal-signin-btn');
-    signinBtn.style.display = 'none';
     renderCalendarEvents(cached);
     updateCacheTimestamp();
   }
@@ -989,11 +1053,23 @@ function connectAll() {
       accessToken = resp.access_token;
       sheetsToken = resp.access_token;
 
-      // Swap sign-in button for refresh button
-      document.getElementById('gcal-signin-btn').style.display = 'none';
-      document.getElementById('refresh-btn').style.display     = 'inline-flex';
-      document.getElementById('cal-status-msg').textContent    = 'Loading events…';
-      document.getElementById('cal-legend').style.display      = 'flex';
+      // Update sign-in button to show connected state (stays visible for re-auth)
+      const btn = document.getElementById('gcal-signin-btn');
+      btn.classList.add('connected');
+      btn.innerHTML = `
+        <svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        ✓ Signed in · Refresh
+      `;
+      btn.classList.remove('connected'); // keep it clickable for refresh
+      btn.onclick = async () => {
+        btn.innerHTML = `<svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.4"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Refreshing…`;
+        await fetchAndMergeEvents();
+        await loadMenuFromSheets();
+        btn.innerHTML = `<svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ✓ Signed in · Refresh`;
+      };
+
+      document.getElementById('cal-status-msg').textContent = 'Loading events…';
+      document.getElementById('cal-legend').style.display   = 'flex';
 
       await fetchAndMergeEvents();
       await loadMenuFromSheets();
