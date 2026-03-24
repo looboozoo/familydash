@@ -709,18 +709,6 @@ async function sheetsPublicRead(tabName) {
   return rows.map(r => r.c.map(cell => (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v) : ''));
 }
 
-// Public CSV read — more reliable for single-cell or free-text content
-async function sheetsPublicReadCSV(tabName) {
-  // Uses the CSV export endpoint which handles any cell content including newlines
-  const gid = await getSheetGid(tabName);
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(tabName)}`;
-  const res  = await fetch(url);
-  const text = await res.text();
-  return text.trim();
-}
-
-// Helper: we don't need gid lookup since we pass sheet name directly
-async function getSheetGid(tabName) { return null; }
 
 // ============================================================
 //  AUTHENTICATED SHEETS WRITE
@@ -880,13 +868,10 @@ notesEl.value = localStorage.getItem('family_notes') || '';
 
 async function loadNotesPublic() {
   try {
-    // Use CSV export — handles free text and newlines reliably
-    const text = await sheetsPublicReadCSV(TAB_NOTES);
-    if (text) {
-      // CSV wraps values in quotes if they contain commas/newlines — strip outer quotes
-      const cleaned = text.replace(/^"|"$/g, '').replace(/""/g, '"');
-      notesEl.value = cleaned;
-      localStorage.setItem('family_notes', cleaned);
+    const rows = await sheetsPublicRead(TAB_NOTES);
+    if (rows && rows[0] && rows[0][0]) {
+      notesEl.value = rows[0][0];
+      localStorage.setItem('family_notes', rows[0][0]);
     }
   } catch(e) {
     console.warn('Could not load notes from Sheets, using localStorage fallback', e);
