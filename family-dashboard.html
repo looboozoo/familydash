@@ -1053,7 +1053,7 @@ async function fetchCalendarEvents(calendarId, ownerLabel) {
     { headers: { Authorization: `Bearer ${accessToken}` } }
   );
   const data = await res.json();
-  return (data.items || []).map(ev => ({ ...ev, _owner: ownerLabel }));
+  return (data.items || []).filter(ev => ev.visibility !== 'private').map(ev => ({ ...ev, _owner: ownerLabel }));
 }
 
 async function fetchAndWriteEvents() {
