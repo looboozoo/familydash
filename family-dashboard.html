@@ -632,12 +632,7 @@
     <div class="card card-today">
       <div class="cal-header-row">
         <div class="card-label" style="margin-bottom:0">Today's Schedule</div>
-        <button class="refresh-btn" id="refresh-btn" onclick="triggerRefresh()" style="display:none">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-          Refresh
-        </button>
       </div>
-      <div class="cache-timestamp" id="cache-timestamp" style="display:none"></div>
       <div class="cal-status" id="cal-status-msg">Sign in with Google to load calendars.</div>
       <div class="cal-legend" id="cal-legend" style="display:none">
         <div class="cal-legend-item">
@@ -686,17 +681,57 @@
 
 <script>
 // ============================================================
-//  CONFIG — replace with your actual IDs
+//  CONFIG
 // ============================================================
-const GCAL_CLIENT_ID = '774777989805-ok8nua42j36ig9k3cgqep5dneleks0cf.apps.googleusercontent.com';
-const SHEET_ID       = '1F1uBSqAOJu4ZnWhsa6NpA_CxTpyTd_YGjsU_1IdwBug';
-
-// Rob's calendar email — so the signed-in account can fetch his events too
-// Make sure Rob has shared his calendar with whichever Google account signs in
+const GCAL_CLIENT_ID  = '774777989805-ok8nua42j36ig9k3cgqep5dneleks0cf.apps.googleusercontent.com';
+const SHEET_ID        = '1F1uBSqAOJu4ZnWhsa6NpA_CxTpyTd_YGjsU_1IdwBug';
+// Rob's calendar — must have shared his calendar with the signing-in account
 const ROB_CALENDAR_ID = 'rob@gmail.com'; // <-- replace with Rob's actual Google email
-
 const JESS_COLOR = '#d47a8f';
 const ROB_COLOR  = '#5a8fc0';
+// Sheet tab names
+const TAB_MENU   = 'Menu';    // A=day, B=meal, C=owner
+const TAB_EVENTS = 'Events';  // A=summary, B=startISO, C=owner, D=htmlLink, E=location, F=isAllDay, G=updatedAt
+
+// ============================================================
+//  PUBLIC SHEETS READ  (no auth needed — sheet is public)
+//  Uses the simple JSON export URL
+// ============================================================
+async function sheetsPublicRead(tabName) {
+  // Google's public JSON export for a named sheet tab
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
+  const res  = await fetch(url);
+  const text = await res.text();
+  // Response is wrapped: /*O_o*/\ngoogle.visualization.Query.setResponse({...})
+  const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
+  const rows = json.table.rows;
+  return rows.map(r => r.c.map(cell => (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v) : ''));
+}
+
+// ============================================================
+//  AUTHENTICATED SHEETS WRITE
+// ============================================================
+let sheetsToken = null;
+
+async function sheetsWrite(tabName, values) {
+  if (!sheetsToken) return;
+  // First clear the range, then write fresh
+  const range = `${tabName}!A1:Z1000`;
+  try {
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}:clear`,
+      { method: 'POST', headers: { Authorization: `Bearer ${sheetsToken}` } }
+    );
+    await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A1?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ values })
+      }
+    );
+  } catch(e) { console.warn('Sheets write failed', e); }
+}
 
 // ============================================================
 //  CLOCK + DATE
@@ -731,38 +766,35 @@ updateBabyCountdown();
 setInterval(updateBabyCountdown, 60000);
 
 // ============================================================
-//  ROMY — GOOD BOY RANDOM VERDICT
+//  ROMY
 // ============================================================
 const ROMY_ANSWERS = [
-  { text: 'Obviously YES 🐾',  color: '#5a9a4a' },
-  { text: 'Absolutely YES ✨',  color: '#5a9a4a' },
-  { text: 'The BEST boy! 🌟',   color: '#5a9a4a' },
-  { text: '100% good boy 💚',   color: '#5a9a4a' },
-  { text: 'Without question 🐶',color: '#5a9a4a' },
-  { text: 'YES (ask again?) 😄',color: '#5a9a4a' },
-  { text: 'Signs point to YES 🐾', color: '#5a9a4a' },
-  { text: 'Ehh… maybe 🤔',     color: '#b09030' },
-  { text: 'Jury is out 🫤',    color: '#b09030' },
+  { text: 'Obviously YES 🐾',      color: '#5a9a4a' },
+  { text: 'Absolutely YES ✨',      color: '#5a9a4a' },
+  { text: 'The BEST boy! 🌟',       color: '#5a9a4a' },
+  { text: '100% good boy 💚',       color: '#5a9a4a' },
+  { text: 'Without question 🐶',    color: '#5a9a4a' },
+  { text: 'YES (ask again?) 😄',    color: '#5a9a4a' },
+  { text: 'Signs point to YES 🐾',  color: '#5a9a4a' },
+  { text: 'Ehh… maybe 🤔',         color: '#b09030' },
+  { text: 'Jury is out 🫤',         color: '#b09030' },
 ];
-
 function rollRomy() {
   const el  = document.getElementById('romy-answer');
   const ans = ROMY_ANSWERS[Math.floor(Math.random() * ROMY_ANSWERS.length)];
-  el.textContent  = ans.text;
-  el.style.color  = ans.color;
+  el.textContent = ans.text;
+  el.style.color = ans.color;
   el.classList.remove('pop');
-  void el.offsetWidth; // force reflow to restart animation
+  void el.offsetWidth;
   el.classList.add('pop');
 }
-
-// Roll once on load
 rollRomy();
 
 // ============================================================
 //  WEEK GRID
 // ============================================================
 function buildWeekGrid() {
-  const now  = new Date();
+  const now   = new Date();
   const start = new Date(now);
   start.setDate(now.getDate() - now.getDay());
   const dayNames = ['Su','Mo','Tu','We','Th','Fr','Sa'];
@@ -790,7 +822,7 @@ const wmoDesc = c => c===0?'Clear':c<=2?'Partly cloudy':c<=3?'Overcast':c<=48?'F
 
 async function loadWeather() {
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.006`
+    const url  = `https://api.open-meteo.com/v1/forecast?latitude=40.7128&longitude=-74.006`
       + `&current=temperature_2m,weathercode&daily=weathercode,temperature_2m_max,temperature_2m_min`
       + `&temperature_unit=fahrenheit&forecast_days=5&timezone=America%2FNew_York`;
     const data = await (await fetch(url)).json();
@@ -798,12 +830,11 @@ async function loadWeather() {
     document.getElementById('w-icon').textContent = wmoIcon(c.weathercode);
     document.getElementById('w-temp').textContent = `${Math.round(c.temperature_2m)}°`;
     document.getElementById('w-desc').textContent = wmoDesc(c.weathercode);
-
     const strip = document.getElementById('forecast-strip');
     const abbr  = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
     strip.innerHTML = '';
     for (let i = 0; i < 5; i++) {
-      const d = new Date(data.daily.time[i] + 'T12:00:00');
+      const d  = new Date(data.daily.time[i] + 'T12:00:00');
       const el = document.createElement('div');
       el.className = 'forecast-day';
       el.innerHTML = `
@@ -822,27 +853,29 @@ loadWeather();
 setInterval(loadWeather, 600000);
 
 // ============================================================
-//  NOTES  (localStorage)
+//  NOTES  (localStorage — notes are device-local, that's fine)
 // ============================================================
 const notesEl = document.getElementById('family-notes');
 notesEl.value = localStorage.getItem('family_notes') || '';
 notesEl.addEventListener('input', () => localStorage.setItem('family_notes', notesEl.value));
 
 // ============================================================
-//  MENU — owner toggle + Google Sheets sync
+//  MENU — public read from Sheets, authenticated write
 // ============================================================
-const menuDays = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const menuDays    = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 let menuSaveTimer = null;
-let sheetsToken   = null;
+
+function escHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
 
 function buildMenuDOM(meals = [], owners = []) {
   const list = document.getElementById('menu-list');
   list.innerHTML = '';
   menuDays.forEach((day, i) => {
     const meal  = meals[i]  || '';
-    const owner = owners[i] || 'both'; // 'jess', 'rob', or 'both'
-
-    const row = document.createElement('div');
+    const owner = owners[i] || 'both';
+    const row   = document.createElement('div');
     row.className = 'menu-day';
     row.innerHTML = `
       <div class="menu-day-name">${day.slice(0,3)}</div>
@@ -855,16 +888,12 @@ function buildMenuDOM(meals = [], owners = []) {
     `;
     list.appendChild(row);
   });
-
-  // Input listeners
   list.querySelectorAll('.menu-meal-input').forEach(inp => {
     inp.addEventListener('input', () => {
       clearTimeout(menuSaveTimer);
       menuSaveTimer = setTimeout(saveMenu, 1500);
     });
   });
-
-  // Owner toggle listeners
   list.querySelectorAll('.menu-owner-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       const idx     = btn.dataset.index;
@@ -880,15 +909,11 @@ function buildMenuDOM(meals = [], owners = []) {
   });
 }
 
-function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
 function getMenuData() {
-  const list = document.getElementById('menu-list');
+  const list   = document.getElementById('menu-list');
   const meals  = [];
   const owners = [];
-  list.querySelectorAll('.menu-day').forEach((row, i) => {
+  list.querySelectorAll('.menu-day').forEach(row => {
     meals.push(row.querySelector('.menu-meal-input').value);
     const active = row.querySelector('.menu-owner-btn.active-jess, .menu-owner-btn.active-rob, .menu-owner-btn.active-both');
     owners.push(active ? active.dataset.owner : 'both');
@@ -896,219 +921,101 @@ function getMenuData() {
   return { meals, owners };
 }
 
-async function loadMenuFromSheets() {
-  if (!sheetsToken) return;
+async function loadMenuPublic() {
   try {
-    const res  = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7`,
-      { headers: { Authorization: `Bearer ${sheetsToken}` } }
-    );
-    const data = await res.json();
-    const rows = data.values || [];
-    if (rows.length === 0) {
-      await initSheet();
-      buildMenuDOM([], []);
-      return;
-    }
+    const rows   = await sheetsPublicRead(TAB_MENU);
+    if (!rows || rows.length === 0) { buildMenuDOM(); return; }
     const meals  = rows.map(r => r[1] || '');
     const owners = rows.map(r => r[2] || 'both');
     buildMenuDOM(meals, owners);
   } catch(e) {
-    console.warn('Sheets load failed, using localStorage', e);
-    const saved = JSON.parse(localStorage.getItem('menu_data') || '{}');
-    buildMenuDOM(saved.meals || [], saved.owners || []);
+    console.warn('Could not load menu from Sheets', e);
+    buildMenuDOM();
   }
-}
-
-async function initSheet() {
-  const values = menuDays.map(d => [d, '', 'both']);
-  await fetch(
-    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7?valueInputOption=RAW`,
-    {
-      method: 'PUT',
-      headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ values })
-    }
-  );
 }
 
 async function saveMenu() {
   const { meals, owners } = getMenuData();
-  // Always save to localStorage as fallback
-  localStorage.setItem('menu_data', JSON.stringify({ meals, owners }));
-
-  if (!sheetsToken) return;
-  const values = menuDays.map((d, i) => [d, meals[i], owners[i]]);
-  try {
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/Sheet1!A1:C7?valueInputOption=RAW`,
-      {
-        method: 'PUT',
-        headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ values })
-      }
-    );
-  } catch(e) {
-    console.warn('Could not save to Sheets', e);
-  }
+  const values = menuDays.map((d, i) => [d, meals[i] || '', owners[i] || 'both']);
+  await sheetsWrite(TAB_MENU, values);
 }
 
 // ============================================================
-//  CACHE — load everything from localStorage immediately on open
+//  LAST-UPDATED PILL
 // ============================================================
-const CACHE_KEY_EVENTS = 'cached_events';
-const CACHE_KEY_TS     = 'cached_events_ts';
-
-function saveEventsToCache(events) {
-  try {
-    localStorage.setItem(CACHE_KEY_EVENTS, JSON.stringify(events));
-    localStorage.setItem(CACHE_KEY_TS, Date.now().toString());
-  } catch(e) { console.warn('Cache write failed', e); }
-}
-
-function loadEventsFromCache() {
-  try {
-    const raw = localStorage.getItem(CACHE_KEY_EVENTS);
-    return raw ? JSON.parse(raw) : null;
-  } catch(e) { return null; }
-}
-
-function getCacheAge() {
-  const ts = localStorage.getItem(CACHE_KEY_TS);
-  if (!ts) return null;
-  return Date.now() - parseInt(ts, 10);
-}
-
-function formatCacheAge(ms) {
+function formatAge(ms) {
   const mins = Math.floor(ms / 60000);
-  if (mins < 1)  return 'just now';
-  if (mins < 60) return `${mins} minute${mins === 1 ? '' : 's'} ago`;
+  if (mins < 1)   return 'just now';
+  if (mins < 60)  return `${mins}m ago`;
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24)  return `${hrs} hour${hrs === 1 ? '' : 's'} ago`;
-  return `${Math.floor(hrs / 24)} day${Math.floor(hrs/24)===1?'':'s'} ago`;
+  if (hrs < 24)   return `${hrs}h ago`;
+  return `${Math.floor(hrs/24)}d ago`;
 }
 
-function updateCacheTimestamp() {
-  const age  = getCacheAge();
+function updatePill(isoString) {
   const pill = document.getElementById('last-updated-pill');
   const text = document.getElementById('last-updated-text');
   const tip  = document.getElementById('pill-tooltip');
-  if (age === null || !pill) return;
-
+  if (!isoString || !pill) return;
   pill.style.display = 'flex';
-  text.textContent   = `Updated ${formatCacheAge(age)}`;
-
-  const isStale = age > 24 * 60 * 60 * 1000; // 24 hours
+  const age     = Date.now() - new Date(isoString).getTime();
+  const isStale = age > 24 * 60 * 60 * 1000;
+  text.textContent = `Updated ${formatAge(age)}`;
   pill.classList.toggle('stale', isStale);
-  tip.textContent = isStale
+  tip.textContent  = isStale
     ? '⚠️ Data is over 24h old — sign in to refresh'
     : 'Sign in with Google to refresh';
 }
 
-// Update pill every minute
-setInterval(updateCacheTimestamp, 60000);
+// ============================================================
+//  CALENDAR EVENTS — public read from Sheets Events tab
+// ============================================================
+async function loadEventsPublic() {
+  try {
+    const rows = await sheetsPublicRead(TAB_EVENTS);
+    if (!rows || rows.length === 0) {
+      document.getElementById('cal-status-msg').textContent = 'Sign in with Google to load calendars.';
+      return;
+    }
+    // Last row is metadata: ['_meta', '', '', '', '', '', updatedAt]
+    let updatedAt = null;
+    let eventRows = rows;
+    if (rows[rows.length - 1][0] === '_meta') {
+      updatedAt = rows[rows.length - 1][6] || null;
+      eventRows = rows.slice(0, -1);
+    }
 
-// Load from localStorage immediately so menu isn't blank on page load
-const localMenu = JSON.parse(localStorage.getItem('menu_data') || '{}');
-buildMenuDOM(localMenu.meals || [], localMenu.owners || []);
+    const events = eventRows.map(r => ({
+      summary:  r[0] || 'Untitled',
+      start:    { dateTime: r[5] === 'true' ? null : r[1], date: r[5] === 'true' ? r[1] : null },
+      _owner:   r[2] || 'jess',
+      htmlLink: r[3] || null,
+      location: r[4] || null,
+    }));
 
-// Load cached events immediately on page open (no sign-in needed)
-window.addEventListener('load', () => {
-  const cached = loadEventsFromCache();
-  if (cached && cached.length > 0) {
     document.getElementById('cal-status-msg').textContent = '';
     document.getElementById('cal-legend').style.display   = 'flex';
-    document.getElementById('refresh-btn').style.display  = 'inline-flex';
-    renderCalendarEvents(cached);
-    updateCacheTimestamp();
+    renderCalendarEvents(events);
+    if (updatedAt) updatePill(updatedAt);
+
+  } catch(e) {
+    console.warn('Could not load events from Sheets', e);
+    document.getElementById('cal-status-msg').textContent = 'Sign in with Google to load calendars.';
   }
-
-  if (GCAL_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID_HERE') setTimeout(showDemo, 300);
-});
-
-// ============================================================
-//  GOOGLE SIGN-IN — single sign-in, loads both calendars + menu
-// ============================================================
-let gisLoaded    = false;
-let tokenClient  = null;
-let accessToken  = null;
-
-const gisScript  = document.createElement('script');
-gisScript.src    = 'https://accounts.google.com/gsi/client';
-gisScript.async  = true;
-gisScript.onload = () => { gisLoaded = true; };
-document.head.appendChild(gisScript);
-
-function connectAll() {
-  if (!gisLoaded) { alert('Google Sign-In still loading, try again in a moment.'); return; }
-
-  tokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GCAL_CLIENT_ID,
-    scope: [
-      'https://www.googleapis.com/auth/calendar.readonly',
-      'https://www.googleapis.com/auth/spreadsheets'
-    ].join(' '),
-    callback: async (resp) => {
-      if (resp.error) { console.error(resp); return; }
-      accessToken = resp.access_token;
-      sheetsToken = resp.access_token;
-
-      // Update sign-in button to show connected state (stays visible for re-auth)
-      const btn = document.getElementById('gcal-signin-btn');
-      btn.classList.add('connected');
-      btn.innerHTML = `
-        <svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        ✓ Signed in · Refresh
-      `;
-      btn.classList.remove('connected'); // keep it clickable for refresh
-      btn.onclick = async () => {
-        btn.innerHTML = `<svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.4"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> Refreshing…`;
-        await fetchAndMergeEvents();
-        await loadMenuFromSheets();
-        btn.innerHTML = `<svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ✓ Signed in · Refresh`;
-      };
-
-      document.getElementById('cal-status-msg').textContent = 'Loading events…';
-      document.getElementById('cal-legend').style.display   = 'flex';
-
-      await fetchAndMergeEvents();
-      await loadMenuFromSheets();
-    }
-  });
-
-  tokenClient.requestAccessToken({ prompt: 'consent' });
-}
-
-// Called by the refresh button — re-uses existing token or prompts sign-in
-async function triggerRefresh() {
-  const btn = document.getElementById('refresh-btn');
-  btn.classList.add('spinning');
-
-  if (accessToken) {
-    // Already signed in — just re-fetch
-    await fetchAndMergeEvents();
-    await loadMenuFromSheets();
-  } else {
-    // Not signed in yet — trigger OAuth
-    connectAll();
-  }
-
-  btn.classList.remove('spinning');
 }
 
 // ============================================================
-//  CALENDAR FETCH — primary (Jess) + Rob's shared calendar
+//  CALENDAR FETCH + WRITE TO SHEETS (authenticated)
 // ============================================================
+let accessToken = null;
+
 async function fetchCalendarEvents(calendarId, ownerLabel) {
   const now   = new Date();
   const endWk = new Date(now);
   endWk.setDate(now.getDate() + 7);
   const params = new URLSearchParams({
-    timeMin: now.toISOString(),
-    timeMax: endWk.toISOString(),
-    singleEvents: true,
-    orderBy: 'startTime',
-    maxResults: 30,
+    timeMin: now.toISOString(), timeMax: endWk.toISOString(),
+    singleEvents: true, orderBy: 'startTime', maxResults: 30,
   });
   const res  = await fetch(
     `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params}`,
@@ -1118,8 +1025,9 @@ async function fetchCalendarEvents(calendarId, ownerLabel) {
   return (data.items || []).map(ev => ({ ...ev, _owner: ownerLabel }));
 }
 
-async function fetchAndMergeEvents() {
+async function fetchAndWriteEvents() {
   try {
+    document.getElementById('cal-status-msg').textContent = 'Loading events…';
     const [jessEvts, robEvts] = await Promise.all([
       fetchCalendarEvents('primary', 'jess'),
       fetchCalendarEvents(ROB_CALENDAR_ID, 'rob'),
@@ -1127,11 +1035,26 @@ async function fetchAndMergeEvents() {
     const all = [...jessEvts, ...robEvts].sort((a, b) =>
       new Date(a.start.dateTime || a.start.date) - new Date(b.start.dateTime || b.start.date)
     );
-    // Save to cache so anyone opening the dashboard sees latest events
-    saveEventsToCache(all);
-    updateCacheTimestamp();
-    renderCalendarEvents(all);
+
+    // Write to Events sheet
+    // Columns: summary, startISO, owner, htmlLink, location, isAllDay, (meta: updatedAt)
+    const rows = all.map(ev => [
+      ev.summary    || '',
+      ev.start.dateTime || ev.start.date || '',
+      ev._owner     || 'jess',
+      ev.htmlLink   || '',
+      ev.location   || '',
+      ev.start.dateTime ? 'false' : 'true',
+    ]);
+    // Append metadata row
+    const updatedAt = new Date().toISOString();
+    rows.push(['_meta', '', '', '', '', '', updatedAt]);
+    await sheetsWrite(TAB_EVENTS, rows);
+
     document.getElementById('cal-status-msg').textContent = '';
+    document.getElementById('cal-legend').style.display   = 'flex';
+    renderCalendarEvents(all);
+    updatePill(updatedAt);
   } catch(e) {
     document.getElementById('cal-status-msg').textContent = 'Could not load events.';
     console.error(e);
@@ -1143,14 +1066,7 @@ async function fetchAndMergeEvents() {
 // ============================================================
 function formatTime(dtString) {
   if (!dtString) return 'All day';
-  const d = new Date(dtString);
-  return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function gcalEventLink(ev) {
-  // Construct a link to the specific event in Google Calendar
-  if (!ev.htmlLink) return null;
-  return ev.htmlLink;
+  return new Date(dtString).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 }
 
 // ============================================================
@@ -1169,12 +1085,11 @@ function renderCalendarEvents(events) {
     container.innerHTML = '<div class="today-empty">Nothing on the books today ✨</div>';
   } else {
     todayEvts.forEach(ev => {
-      const time  = formatTime(ev.start.dateTime);
-      const color = ev._owner === 'jess' ? JESS_COLOR : ROB_COLOR;
-      const label = ev._owner === 'jess' ? 'Jess' : 'Rob';
-      const link  = gcalEventLink(ev);
-      const titleEl = link
-        ? `<a class="event-title" href="${link}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
+      const time    = formatTime(ev.start.dateTime);
+      const color   = ev._owner === 'jess' ? JESS_COLOR : ROB_COLOR;
+      const label   = ev._owner === 'jess' ? 'Jess' : 'Rob';
+      const titleEl = ev.htmlLink
+        ? `<a class="event-title" href="${ev.htmlLink}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
         : `<span class="event-title">${ev.summary || 'Untitled'}</span>`;
       const div = document.createElement('div');
       div.className = 'event-item';
@@ -1191,10 +1106,9 @@ function renderCalendarEvents(events) {
     });
   }
 
-  // Week events
-  const weekList  = document.getElementById('week-events-list');
+  const weekList   = document.getElementById('week-events-list');
   weekList.innerHTML = '';
-  const dayAbbr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayAbbr    = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   const futureEvts = events
     .filter(ev => new Date(ev.start.dateTime || ev.start.date).toDateString() !== todayStr)
     .slice(0, 10);
@@ -1206,15 +1120,14 @@ function renderCalendarEvents(events) {
       const start = new Date(ev.start.dateTime || ev.start.date);
       const color = ev._owner === 'jess' ? JESS_COLOR : ROB_COLOR;
       const time  = ev.start.dateTime ? formatTime(ev.start.dateTime) : 'All day';
-      const link  = gcalEventLink(ev);
       const div   = document.createElement('div');
       div.className = 'week-event-item';
       div.innerHTML = `
         <div class="week-event-day-tag">${dayAbbr[start.getDay()]}</div>
         <div style="width:6px;height:6px;border-radius:50%;background:${color};flex-shrink:0"></div>
         <div class="week-event-time">${time}</div>
-        ${link
-          ? `<a class="week-event-title" href="${link}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
+        ${ev.htmlLink
+          ? `<a class="week-event-title" href="${ev.htmlLink}" target="_blank" rel="noopener">${ev.summary || 'Untitled'}</a>`
           : `<span class="week-event-title">${ev.summary || 'Untitled'}</span>`}
         <span class="owner-badge ${ev._owner}" style="font-size:9px;padding:1px 5px">${ev._owner==='jess'?'J':'R'}</span>
       `;
@@ -1224,34 +1137,61 @@ function renderCalendarEvents(events) {
 }
 
 // ============================================================
-//  DEMO MODE
+//  GOOGLE SIGN-IN — single button, loads both calendars + menu
 // ============================================================
-function showDemo() {
-  document.getElementById('gcal-signin-btn').classList.add('connected');
-  document.getElementById('gcal-signin-btn').innerHTML = '★ Demo mode';
-  document.getElementById('gcal-signin-btn').disabled = true;
-  document.getElementById('cal-status-msg').textContent = '(Demo — add your Google Client ID to connect live)';
-  document.getElementById('cal-legend').style.display = 'flex';
+let gisLoaded   = false;
+let tokenClient = null;
 
-  const now  = new Date();
-  const fmt  = (h, m) => { const d = new Date(now); d.setHours(h, m, 0); return d.toISOString(); };
-  const next = (off, h, m) => { const d = new Date(now); d.setDate(d.getDate()+off); d.setHours(h,m,0); return d.toISOString(); };
+const gisScript  = document.createElement('script');
+gisScript.src    = 'https://accounts.google.com/gsi/client';
+gisScript.async  = true;
+gisScript.onload = () => { gisLoaded = true; };
+document.head.appendChild(gisScript);
 
-  const fakeEvents = [
-    { summary: 'OB Appointment',         start: { dateTime: fmt(10,0)    }, location: 'NYU Langone', _owner:'jess', htmlLink:'https://calendar.google.com' },
-    { summary: 'Lunch with Maya',         start: { dateTime: fmt(12,30)   }, _owner:'jess', htmlLink:'https://calendar.google.com' },
-    { summary: 'Work standup',            start: { dateTime: fmt(9,0)     }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
-    { summary: 'Yoga class',              start: { dateTime: next(1,9,0)  }, _owner:'jess', htmlLink:'https://calendar.google.com' },
-    { summary: 'Dinner with the Garcias', start: { dateTime: next(1,19,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
-    { summary: 'Baby shower call',        start: { dateTime: next(2,18,0) }, _owner:'jess', htmlLink:'https://calendar.google.com' },
-    { summary: 'Grocery run 🛒',           start: { dateTime: next(3,11,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
-    { summary: 'Walk with Romy 🐾',        start: { dateTime: next(4,8,30) }, _owner:'jess', htmlLink:'https://calendar.google.com' },
-    { summary: 'Dentist',                 start: { dateTime: next(5,10,0) }, _owner:'rob',  htmlLink:'https://calendar.google.com' },
-  ];
-  renderCalendarEvents(fakeEvents);
+function connectAll() {
+  if (!gisLoaded) { alert('Google Sign-In still loading, try again in a moment.'); return; }
+
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/spreadsheets',
+    ].join(' '),
+    callback: async (resp) => {
+      if (resp.error) { console.error(resp); return; }
+      accessToken = resp.access_token;
+      sheetsToken = resp.access_token;
+
+      // Update button — stays visible for re-refresh
+      const btn = document.getElementById('gcal-signin-btn');
+      btn.innerHTML = `
+        <svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        ✓ Signed in · Refresh
+      `;
+      btn.onclick = async () => {
+        btn.textContent = 'Refreshing…';
+        await fetchAndWriteEvents();
+        await loadMenuPublic();
+        btn.innerHTML = `<svg class="gcal-icon" viewBox="0 0 24 24" style="opacity:0.6"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg> ✓ Signed in · Refresh`;
+      };
+
+      await fetchAndWriteEvents();
+      await loadMenuPublic();
+    }
+  });
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-
+// ============================================================
+//  ON LOAD — read everything publicly from Sheets, no auth
+// ============================================================
+window.addEventListener('load', async () => {
+  buildMenuDOM(); // blank shell immediately
+  await Promise.all([
+    loadEventsPublic(),
+    loadMenuPublic(),
+  ]);
+});
 </script>
 </body>
 </html>
