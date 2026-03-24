@@ -703,11 +703,24 @@ async function sheetsPublicRead(tabName) {
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(tabName)}`;
   const res  = await fetch(url);
   const text = await res.text();
-  // Response is wrapped: /*O_o*/\ngoogle.visualization.Query.setResponse({...})
   const json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*)\)/)[1]);
   const rows = json.table.rows;
+  if (!rows) return [];
   return rows.map(r => r.c.map(cell => (cell && cell.v !== null && cell.v !== undefined) ? String(cell.v) : ''));
 }
+
+// Public CSV read — more reliable for single-cell or free-text content
+async function sheetsPublicReadCSV(tabName) {
+  // Uses the CSV export endpoint which handles any cell content including newlines
+  const gid = await getSheetGid(tabName);
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&sheet=${encodeURIComponent(tabName)}`;
+  const res  = await fetch(url);
+  const text = await res.text();
+  return text.trim();
+}
+
+// Helper: we don't need gid lookup since we pass sheet name directly
+async function getSheetGid(tabName) { return null; }
 
 // ============================================================
 //  AUTHENTICATED SHEETS WRITE
@@ -716,15 +729,17 @@ let sheetsToken = null;
 
 async function sheetsWrite(tabName, values) {
   if (!sheetsToken) return;
-  // First clear the range, then write fresh
-  const range = `${tabName}!A1:Z1000`;
   try {
+    // For single-cell tabs (Notes), just update A1 directly — no clear needed
+    // For multi-row tabs, clear first then write
+    if (values.length > 1 || (values.length === 1 && values[0].length > 1)) {
+      await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName + '!A1:Z1000')}:clear`,
+        { method: 'POST', headers: { Authorization: `Bearer ${sheetsToken}` } }
+      );
+    }
     await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}:clear`,
-      { method: 'POST', headers: { Authorization: `Bearer ${sheetsToken}` } }
-    );
-    await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName)}!A1?valueInputOption=RAW`,
+      `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(tabName + '!A1')}?valueInputOption=RAW`,
       {
         method: 'PUT',
         headers: { Authorization: `Bearer ${sheetsToken}`, 'Content-Type': 'application/json' },
@@ -865,10 +880,13 @@ notesEl.value = localStorage.getItem('family_notes') || '';
 
 async function loadNotesPublic() {
   try {
-    const rows = await sheetsPublicRead(TAB_NOTES);
-    if (rows && rows[0] && rows[0][0]) {
-      notesEl.value = rows[0][0];
-      localStorage.setItem('family_notes', rows[0][0]);
+    // Use CSV export — handles free text and newlines reliably
+    const text = await sheetsPublicReadCSV(TAB_NOTES);
+    if (text) {
+      // CSV wraps values in quotes if they contain commas/newlines — strip outer quotes
+      const cleaned = text.replace(/^"|"$/g, '').replace(/""/g, '"');
+      notesEl.value = cleaned;
+      localStorage.setItem('family_notes', cleaned);
     }
   } catch(e) {
     console.warn('Could not load notes from Sheets, using localStorage fallback', e);
